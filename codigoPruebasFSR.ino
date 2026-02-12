@@ -1,9 +1,15 @@
 #include <hal/nrf_saadc.h>
-
+#include <Nicla_System.h>
 
 float voltaje_SAADC = 0; //voltaje que devuelve el SAADC
 
 void setup() {
+  //Inicialización de la nicla, necesario para la configuración de los niveles de voltaje
+  nicla::begin();
+
+  //Habilitar el LDO de 3.3 V, para que el las líneas I2C y SPI se pueden comunicar a ese nivel de voltaje con perifericos externos
+  nicla::enable3V3LDO();
+  
   //Comunicación serial para diagnóstico rápido de lectura del ADC
   Serial.begin(115200);
   while(!Serial);
