@@ -1,7 +1,10 @@
 #include <hal/nrf_saadc.h>
 #include <Nicla_System.h>
+#include <SPI.h>
+#include <SD.h>
 
 float voltaje_SAADC = 0; //voltaje que devuelve el SAADC
+const int CS_PIN = 6; //Se selecciona ese pin para el CS, el cual el numero es su alias en Arduino. En la ANNA-B112 es P0_29
 
 void setup() {
   //Inicialización de la nicla, necesario para la configuración de los niveles de voltaje
@@ -9,15 +12,55 @@ void setup() {
 
   //Habilitar el LDO de 3.3 V, para que el las líneas I2C y SPI se pueden comunicar a ese nivel de voltaje con perifericos externos
   nicla::enable3V3LDO();
-  
+
   //Comunicación serial para diagnóstico rápido de lectura del ADC
   Serial.begin(115200);
-  while(!Serial);
+  while(!Serial); //BORRAR CUANDO SE DESCONECTE DE LA COMPU
+
+  //Configuración del SD, con configuración SPI integrada
+  //La memoria SD debe estar formateada en FAT32 previamente
+if (!SD.begin(CS_PIN)) { 
+    Serial.println("FALLO EN COMUNCACION CON EL SD.");
+    while (1);
+  }
 
   //Función con configuración del SAADC
   configuracion_SAADC();
+
+
+  /*ESCRITURA DEL SD*/
+  //Crear carpeta para la escritura, verifica si ya se creó
+  if (SD.exists("Sensores")) { 
+    Serial.println("-> La carpeta 'Sensores' ya existe.");
+  } else {
+    Serial.print("-> Creando carpeta 'Sensores'...");
+    if (SD.mkdir("Sensores")) {
+      Serial.println(" HECHO.");
+    } else {
+      Serial.println(" ERROR creando carpeta.");
+    }
+  }
+
+  //Escribiendo un archivo de texto
+  Serial.print("-> Escribiendo en 'Sensores/test.txt'...");
   
+  File myFile = SD.open("Sensores/test.txt", FILE_WRITE); 
+
+  if (myFile) {
+    myFile.println("--- LOG DE DATOS ---");
+    myFile.println("Fecha: 2026-02-12"); // Simulado, luego usaremos el RTC
+    myFile.println("Voltaje: 3.3V OK");
+    myFile.println("Prueba de escritura en subdirectorio exitosa.");
+    myFile.close(); // IMPORTANTE: Siempre cerrar para guardar cambios
+    Serial.println(" HECHO.");
+  } else {
+    Serial.println(" ERROR abriendo el archivo para escritura.");
+  }
+
+  Serial.println("\n--- PRUEBA FINALIZADA ---");
+  Serial.println("Desconecta la SD y revisala en tu PC.");
 }
+
 
 void loop() {
   voltaje_SAADC = lectura_SAADC();
