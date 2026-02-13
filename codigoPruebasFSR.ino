@@ -2,6 +2,8 @@
 #include <Nicla_System.h>
 #include <SPI.h>
 #include <SD.h>
+#include <Adafruit GFX.h>
+#include 
 
 float voltaje_SAADC = 0; //voltaje que devuelve el SAADC
 const int CS_PIN = 6; //Se selecciona ese pin para el CS, el cual el numero es su alias en Arduino. En la ANNA-B112 es P0_29
@@ -19,46 +21,14 @@ void setup() {
 
   //Configuración del SD, con configuración SPI integrada
   //La memoria SD debe estar formateada en FAT32 previamente
-if (!SD.begin(CS_PIN)) { 
-    Serial.println("FALLO EN COMUNCACION CON EL SD.");
-    while (1);
-  }
+  configuracion_SD(CS_PIN);
 
   //Función con configuración del SAADC
   configuracion_SAADC();
 
 
-  /*ESCRITURA DEL SD*/
-  //Crear carpeta para la escritura, verifica si ya se creó
-  if (SD.exists("Sensores")) { 
-    Serial.println("-> La carpeta 'Sensores' ya existe.");
-  } else {
-    Serial.print("-> Creando carpeta 'Sensores'...");
-    if (SD.mkdir("Sensores")) {
-      Serial.println(" HECHO.");
-    } else {
-      Serial.println(" ERROR creando carpeta.");
-    }
-  }
-
-  //Escribiendo un archivo de texto
-  Serial.print("-> Escribiendo en 'Sensores/test.txt'...");
-  
-  File myFile = SD.open("Sensores/test.txt", FILE_WRITE); 
-
-  if (myFile) {
-    myFile.println("--- LOG DE DATOS ---");
-    myFile.println("Fecha: 2026-02-12"); // Simulado, luego usaremos el RTC
-    myFile.println("Voltaje: 3.3V OK");
-    myFile.println("Prueba de escritura en subdirectorio exitosa.");
-    myFile.close(); // IMPORTANTE: Siempre cerrar para guardar cambios
-    Serial.println(" HECHO.");
-  } else {
-    Serial.println(" ERROR abriendo el archivo para escritura.");
-  }
-
-  Serial.println("\n--- PRUEBA FINALIZADA ---");
-  Serial.println("Desconecta la SD y revisala en tu PC.");
+  /*PRUEBA DE ESCRITURA DEL SD*/
+  pruebaEscritura_SD();
 }
 
 
@@ -107,4 +77,45 @@ nrf_saadc_value_t val;
   nrf_saadc_event_clear(NRF_SAADC_EVENT_END);
 
   return val*1.8/4095; //Multiplicar entre el V_ref (explicado que es la referencia interna de 0.6 multiplicada por 3) y el tamaño de palabra menos uno (2**12-1)
+}
+
+void configuracion_SD (const int CS_PIN){
+  if (!SD.begin(CS_PIN)) { 
+      Serial.println("FALLO EN COMUNCACION CON EL SD."); //Tiene que haberse iniciado previamente la comunicación serial
+      while (1);
+  }
+}
+
+void pruebaEscritura_SD(void){
+    /*ESCRITURA DEL SD*/
+  //Crear carpeta para la escritura, verifica si ya se creó
+  if (SD.exists("Sensores")) { 
+    Serial.println("-> La carpeta 'Sensores' ya existe.");
+  } else {
+    Serial.print("-> Creando carpeta 'Sensores'...");
+    if (SD.mkdir("Sensores")) {
+      Serial.println(" HECHO.");
+    } else {
+      Serial.println(" ERROR creando carpeta.");
+    }
+  }
+
+  //Escribiendo un archivo de texto
+  Serial.print("-> Escribiendo en 'Sensores/test.txt'...");
+  
+  File myFile = SD.open("Sensores/test.txt", FILE_WRITE); 
+
+  if (myFile) {
+    myFile.println("--- LOG DE DATOS ---");
+    myFile.println("Fecha: 2026-02-12"); // Simulado, luego usaremos el RTC
+    myFile.println("Voltaje: 3.3V OK");
+    myFile.println("Prueba de escritura en subdirectorio exitosa.");
+    myFile.close(); // IMPORTANTE: Siempre cerrar para guardar cambios
+    Serial.println(" HECHO.");
+  } else {
+    Serial.println(" ERROR abriendo el archivo para escritura.");
+  }
+
+  Serial.println("\n--- PRUEBA FINALIZADA ---");
+  Serial.println("Desconecta la SD y revisala en tu PC.");
 }
