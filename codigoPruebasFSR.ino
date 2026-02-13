@@ -15,6 +15,7 @@ float voltaje_SAADC = 0; //voltaje que devuelve el SAADC
 const int CS_PIN = 6; //Se selecciona ese pin para el CS que se comunica con el módulo microSD, el cual el numero es su alias en Arduino. En la ANNA-B112 es P0_29
 
 //Constructor del objeto de la pantalla, obtenido de la biblioteca SH110X
+Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 void setup() {
   //Inicialización de la nicla, necesario para la configuración de los niveles de voltaje
@@ -26,6 +27,9 @@ void setup() {
   //Comunicación serial para diagnóstico rápido de lectura del ADC
   Serial.begin(115200);
   while(!Serial); //BORRAR CUANDO SE DESCONECTE DE LA COMPU
+
+  //Configuración de la pantalla OLED
+  configuracion_Pantalla(); 
 
   //Configuración del SD, con configuración SPI integrada
   //La memoria SD debe estar formateada en FAT32 previamente
@@ -46,6 +50,20 @@ void loop() {
   Serial.print(voltaje_SAADC, 3); //Tres decimales significativos
   Serial.println(" [V]");
   
+  // Salida a Pantalla (Actualización en tiempo real)
+  display.clearDisplay(); // Borrar frame anterior
+  
+  display.setTextSize(1);
+  display.setTextColor(SH110X_WHITE);
+  display.setCursor(0, 0);
+  display.println("Nicla Datalogger");
+
+  display.setTextSize(2); // Texto más grande para el valor
+  display.setCursor(10, 20);
+  display.print(voltaje_SAADC, 3);
+  display.println(" V");
+
+  display.display(); // ¡IMPRESCINDIBLE para que se vea!
 
   delay(250);
 }
@@ -90,6 +108,12 @@ nrf_saadc_value_t val;
 void configuracion_SD (const int CS_PIN){
   if (!SD.begin(CS_PIN)) { 
       Serial.println("FALLO EN COMUNCACION CON EL SD."); //Tiene que haberse iniciado previamente la comunicación serial
+      
+      //Feedback en pantalla
+      display.clearDisplay();
+      display.setCursor(0,0);
+      display.println("ERROR SD!");
+      display.display();
       while (1);
   }
 }
@@ -126,4 +150,24 @@ void pruebaEscritura_SD(void){
 
   Serial.println("\n--- PRUEBA FINALIZADA ---");
   Serial.println("Desconecta la SD y revisala en tu PC.");
+}
+
+void configuracion_Pantalla(){
+  Serial.print("Iniciando OLED...");
+  // Intentar iniciar con la dirección 0x3C
+  if(!display.begin(i2c_Address, true)) { 
+     Serial.println("FALLO OLED. Revisa direccion I2C o cables.");
+     // No bloqueamos el código con while(1) para que el resto (SD) siga funcionando,
+     // pero podrías bloquearlo si la pantalla es crítica.
+  } else {
+    Serial.println(" OK.");
+    display.clearDisplay();
+    
+    // Mensaje de bienvenida
+    display.setTextSize(1);
+    display.setTextColor(SH110X_WHITE);
+    display.setCursor(10, 20);
+    display.println("Iniciando...");
+    display.display();
+  }
 }
