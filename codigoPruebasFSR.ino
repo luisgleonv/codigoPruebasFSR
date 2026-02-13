@@ -1,12 +1,20 @@
 #include <hal/nrf_saadc.h>
 #include <Nicla_System.h>
 #include <SPI.h>
+#include <Wire.h>
 #include <SD.h>
-#include <Adafruit GFX.h>
-#include 
+#include <Adafruit_GFX.h>
+#include <Adafruit_SH110X.h>
+
+#define i2c_Address 0x3c //Dirección del display OLED I2C
+#define SCREEN_WIDTH 128 //Ancho de la pantalla
+#define SCREEN_HEIGHT 64 //Altura de la pantalla
+#define OLED_RESET -1
 
 float voltaje_SAADC = 0; //voltaje que devuelve el SAADC
-const int CS_PIN = 6; //Se selecciona ese pin para el CS, el cual el numero es su alias en Arduino. En la ANNA-B112 es P0_29
+const int CS_PIN = 6; //Se selecciona ese pin para el CS que se comunica con el módulo microSD, el cual el numero es su alias en Arduino. En la ANNA-B112 es P0_29
+
+//Constructor del objeto de la pantalla, obtenido de la biblioteca SH110X
 
 void setup() {
   //Inicialización de la nicla, necesario para la configuración de los niveles de voltaje
